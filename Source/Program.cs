@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Components.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
-using Source.Controllers;
 using Source.Data;
+using Source.Endpoints;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHealthChecks();
@@ -23,6 +23,6 @@ if (app.Environment.IsDevelopment())
 }
 
 app.MapHealthChecks("/health");
-// app.MapGroup("/user").MapUserController();
+app.MapGroup("/user").MapUserController();
 
 app.Run();
