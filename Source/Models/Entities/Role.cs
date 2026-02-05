@@ -3,12 +3,11 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 
 namespace Source.Models.Entities;
 
-[Table("Users")]
-public class User : IdentityUser<int>
+[Table("Roles")]
+public class Role : IdentityRole<int>
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -18,21 +17,16 @@ public class User : IdentityUser<int>
     [Column("Uuid")]
     public Guid Uuid { get; set; }
 
-    [Column("FirstName")]
+    [Column("Name")]
     [Required]
     [NotNull]
-    [MaxLength(255)]
-    public string FirstName { get; set; } = string.Empty;
+    public override string Name {get; set;}
 
-    [Column("LastName")]
-    [MaxLength(255)]
-    public string LastName { get; set; } = string.Empty;
+    [Column("Descripton")]
+    public string? Descripton {get; set;}
 
-    [Column("MiddleName")]
-    [MaxLength(255)]
-    public string MiddleName { get; set; } = string.Empty;
 
-    public User()
+    public Role() : base()
     {
         Uuid = Guid.NewGuid();
     }

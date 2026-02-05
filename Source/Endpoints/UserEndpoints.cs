@@ -1,11 +1,12 @@
 using System;
 using System.Reflection.Metadata.Ecma335;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Npgsql.Replication;
 using Source.Data;
-using Source.Models;
+using Source.Models.Entities;
 using Source.ViewModels;
 
 namespace Source.Endpoints;
@@ -17,6 +18,7 @@ public static class UserEndpoints
         groups.MapGet("/", GetUsers).Produces(200);
         groups.MapGet("/{uuid}", GetUsersById).Produces(200).ProducesProblem(404);
         groups.MapPost("/", CreateUser).Accepts<UserRequest>("application/json").Produces(201).ProducesProblem(400);
+        groups.MapPost("/login", UserLogin).Accepts<UserRequest>("application/json").Produces(201).ProducesProblem(400);
 
         return groups;
     }
@@ -24,7 +26,7 @@ public static class UserEndpoints
     internal static async Task<IResult> GetUsers([FromServices] AppDbContext context)
     {
         var users = await context.User.ToListAsync();
-        var userResponses = users.Select(u => new UserResponce(u.Uuid, u.FirstName, u.LastName)).ToList();
+        var userResponses = users.Select(u => new UserResponce(u)).ToList();
     
         return TypedResults.Ok(userResponses);
     }
@@ -32,20 +34,37 @@ public static class UserEndpoints
     internal static async Task<IResult> GetUsersById([FromServices] AppDbContext context, [FromRoute] Guid uuid)
     {
         var user = await context.User.FirstOrDefaultAsync(u => u.Uuid == uuid);
-        return user is User user1 ? TypedResults.Ok(new UserResponce(user.Uuid, user.FirstName, user.LastName)) : TypedResults.NotFound();
+        return user is User user1 ? TypedResults.Ok(new UserResponce(user)) : TypedResults.NotFound();
     }
 
-    internal static async Task<IResult> CreateUser([FromServices] AppDbContext context, [FromBody] UserRequest userRequest)
+    internal static async Task<IResult> CreateUser([FromServices] UserManager<User> userManager,[FromBody] UserRequest userRequest)
     {
+
         var newUser = new User
         {
+            UserName = userRequest.UserName, 
+            Email = userRequest.Email,
             FirstName = userRequest.FirstName,
             LastName = userRequest.LastName
         };
 
-        context.User.AddAsync(newUser);
-        await context.SaveChangesAsync();
+        var results = await userManager.CreateAsync(newUser, userRequest.Password);
 
-        return TypedResults.Created($"/users/{newUser.Uuid}", new UserResponce(newUser.Uuid, newUser.FirstName, newUser.LastName));
+        if (results.Succeeded)
+        {
+            return TypedResults.Created($"/users/{newUser.Uuid}", new UserResponce(newUser));
+        }
+
+        return TypedResults.BadRequest(results.Errors);
+    }
+
+    internal static async Task<IResult> UserLogin([FromServices] SignInManager<User> signInManager, [FromBody] LoginRequest loginRequest)
+    {
+        var results = await signInManager.PasswordSignInAsync(loginRequest.UserName, loginRequest.Password, loginRequest.RememberMe, false);
+        Console.WriteLine(results);
+
+        if(results.Succeeded) return TypedResults.Ok(new { message = "Успешная авторизация" });
+
+        return TypedResults.Unauthorized();
     }
 }
