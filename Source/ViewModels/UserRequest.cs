@@ -8,7 +8,7 @@ using Source.Data;
 
 namespace Source.ViewModels;
 
-public class UserRequest : IValidatableObject
+public class UserRequest /* : IValidatableObject */
 {
     [Required(ErrorMessage = "Логин обязательно")]
     [MinLength(1, ErrorMessage = "Логин не может быть пустым")]
@@ -28,24 +28,5 @@ public class UserRequest : IValidatableObject
     public string? LastName { get; set; }
 
     [Required(ErrorMessage = "Пароль обязателен")]
-    [MinLength(5, ErrorMessage = "Пароль должен состоять хотябы из 5 символов")]
     public string? Password { get; set; }
-
-    public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
-    {
-        var results = new List<ValidationResult>();
-
-        if (!string.IsNullOrEmpty(Email))
-        {   
-            var dbContext = validationContext.GetService<AppDbContext>();
-            if (dbContext != null && dbContext.User.Any(u => u.Email == Email))
-            {
-                results.Add(new ValidationResult(
-                    "Пользователь с такой почтой уже существует", 
-                    new[] { nameof(Email) }));
-            }
-        }
-
-        return results;
-    }
 }

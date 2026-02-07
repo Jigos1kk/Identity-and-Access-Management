@@ -1,5 +1,7 @@
+using System.Globalization;
 using Microsoft.AspNetCore.Components.Infrastructure;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using Source;
@@ -7,8 +9,31 @@ using Source.Data;
 using Source.Endpoints;
 using Source.Models;
 using Source.Models.Entities;
+using Source.Service;
+using Source.Settings;
+
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddSingleton<IJsonLocalizer, JsonLocalizer>();
+builder.Services.AddLocalization(options =>
+{
+    options.ResourcesPath = "Resources";
+});
+builder.Services.AddRequestLocalization(options =>
+{
+    var cultureList = builder.Configuration.GetSection("Localization").GetSection("SupportedCultures").Get<string[]>()
+        .Select(c => new CultureInfo(c))
+        .ToList();
+
+    options.DefaultRequestCulture = new RequestCulture(builder.Configuration.GetSection("Localization")["DefaultCulture"]);
+    options.SupportedCultures = cultureList;
+    options.SupportedUICultures = cultureList;
+    
+    options.RequestCultureProviders.Insert(0, 
+        new QueryStringRequestCultureProvider { QueryStringKey = "culture" });
+});
+
 builder.Services.AddHealthChecks();
 builder.Services.AddOpenApi();
 builder.Services.AddValidation();
@@ -32,6 +57,7 @@ builder.Services.AddIdentity<User, Role>(options =>
     options.User.RequireUniqueEmail = true;
 })
 .AddEntityFrameworkStores<AppDbContext>()
+.AddErrorDescriber<CustomIdentityErrorDescriber>()
 .AddDefaultTokenProviders();
 
 builder.Services.AddRazorPages();
@@ -48,17 +74,13 @@ builder.Services.ConfigureApplicationCookie(options =>
 
 
 var app = builder.Build();
+app.UseRequestLocalization();
 
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference("/docs");
     app.MapScalarApiReference("/api-docs");
-}
-else
-{
-    app.UseExceptionHandler("/Error");
-    app.UseHsts();
 }
 
 app.MapHealthChecks("/health");

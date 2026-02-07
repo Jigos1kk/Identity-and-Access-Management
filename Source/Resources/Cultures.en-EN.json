@@ -1,0 +1,20 @@
+{
+  "PasswordRequiresDigit": "Passwords must have at least one digit ('0'-'9').",
+  "PasswordRequiresLower": "Passwords must have at least one lowercase ('a'-'z').",
+  "PasswordRequiresUpper": "Passwords must have at least one uppercase ('A'-'Z').",
+  "PasswordRequiresNonAlphanumeric": "Passwords must have at least one non-alphanumeric character.",
+  "PasswordTooShort": "Passwords must be at least {0} characters.",
+  "PasswordRequiresUniqueChars": "Passwords must use at least {0} different characters.",
+  "InvalidEmail": "Email '{0}' is invalid.",
+  "DuplicateEmail": "Email '{0}' is already taken.",
+  "DuplicateUserName": "User name '{0}' is already taken.",
+  "PasswordMismatch": "Incorrect password.",
+  "InvalidToken": "Invalid token.",
+  "LoginAlreadyAssociated": "A user with this login already exists.",
+  "InvalidUserName": "User name '{0}' is invalid, can only contain letters, digits, and the characters -._@+.",
+  "UserAlreadyHasPassword": "User already has a password set.",
+  "UserAlreadyInRole": "User already in role '{0}'.",
+  "UserNotInRole": "User is not in role '{0}'.",
+  "DefaultError": "An unknown failure has occurred.",
+  "SuccessLogin": "Successful authorization"
+}

@@ -7,12 +7,14 @@ using Microsoft.EntityFrameworkCore;
 using Npgsql.Replication;
 using Source.Data;
 using Source.Models.Entities;
+using Source.Service;
 using Source.ViewModels;
 
 namespace Source.Endpoints;
 
 public static class UserEndpoints
 {
+
     public static RouteGroupBuilder MapUserController(this RouteGroupBuilder groups)
     {
         groups.MapGet("/", GetUsers).Produces(200);
@@ -58,12 +60,12 @@ public static class UserEndpoints
         return TypedResults.BadRequest(results.Errors);
     }
 
-    internal static async Task<IResult> UserLogin([FromServices] SignInManager<User> signInManager, [FromBody] LoginRequest loginRequest)
+    internal static async Task<IResult> UserLogin([FromServices] SignInManager<User> signInManager, [FromServices] IJsonLocalizer localizer, [FromBody] LoginRequest loginRequest)
     {
         var results = await signInManager.PasswordSignInAsync(loginRequest.UserName, loginRequest.Password, loginRequest.RememberMe, false);
         Console.WriteLine(results);
 
-        if(results.Succeeded) return TypedResults.Ok(new { message = "Успешная авторизация" });
+        if(results.Succeeded) return TypedResults.Ok(localizer["SuccessLogin"]);
 
         return TypedResults.Unauthorized();
     }
