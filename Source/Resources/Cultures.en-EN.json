@@ -16,5 +16,6 @@
   "UserAlreadyInRole": "User already in role '{0}'.",
   "UserNotInRole": "User is not in role '{0}'.",
   "DefaultError": "An unknown failure has occurred.",
-  "SuccessLogin": "Successful authorization"
+  "SuccessLogin": "Successful authorization",
+  "UsernameNotRegistered": "An account with that username is not registered"
 }

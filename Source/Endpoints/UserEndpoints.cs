@@ -1,4 +1,5 @@
 using System;
+using System.IdentityModel.Tokens.Jwt;
 using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -21,7 +22,7 @@ public static class UserEndpoints
     public static RouteGroupBuilder MapUserController(this RouteGroupBuilder groups)
     {
         groups.MapGet("/", GetUsers).Produces(200);
-        groups.MapGet("/{uuid}", GetUsersById).Produces(200).ProducesProblem(404);
+        groups.MapGet("/{uuid}", GetUsersById).RequireAuthorization().Produces(200).ProducesProblem(404).ProducesProblem(403);
         groups.MapPost("/", CreateUser).Accepts<UserRequest>("application/json").Produces(201).ProducesProblem(400);
         groups.MapPost("/login", UserLogin).Accepts<UserRequest>("application/json").Produces(201).ProducesProblem(400);
         groups.MapGet("/confirm-email", ConfirmEmail).Produces(200).ProducesProblem(404).ProducesProblem(400);
@@ -80,12 +81,48 @@ public static class UserEndpoints
         return TypedResults.BadRequest(results.Errors);
     }
 
-    internal static async Task<IResult> UserLogin([FromServices] SignInManager<User> signInManager, [FromServices] IJsonLocalizer localizer, [FromBody] LoginRequest loginRequest)
+    internal static async Task<IResult> UserLogin(
+        HttpContext httpContext,
+        [FromServices] SignInManager<User> signInManager, 
+        [FromServices] IJsonLocalizer localizer, 
+        [FromServices] JwtService tokenService,
+        [FromBody] LoginRequest loginRequest
+    )
     {
+        var user = await signInManager.UserManager.FindByNameAsync(loginRequest.UserName);
+        if(user == null)
+        {
+            return TypedResults.NotFound(new
+            {
+                message = localizer["UsernameNotRegistered"]
+            });
+        }
         var results = await signInManager.PasswordSignInAsync(loginRequest.UserName, loginRequest.Password, loginRequest.RememberMe, false);
-        Console.WriteLine(results);
 
-        if(results.Succeeded) return TypedResults.Ok(localizer["SuccessLogin"]);
+        var tokens = await tokenService.GenerateTokensAsync(Convert.ToString(user.Uuid), user.Email, loginRequest.RememberMe);
+
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            // Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Expires = tokens.RefreshTokenExpires,
+            Path = "/refresh"
+        };
+
+        httpContext.Response.Cookies.Append(
+            "refreshToken", 
+            tokens.RefreshToken,
+            cookieOptions);
+
+        if(results.Succeeded) return TypedResults.Ok(new {
+            message = localizer["SuccessLogin"],
+            data = new
+            {
+                accessToken = tokens.AccessToken,
+                accessTokenExpires = tokens.AccessTokenExpires
+            }
+        });
 
         return TypedResults.Unauthorized();
     }
