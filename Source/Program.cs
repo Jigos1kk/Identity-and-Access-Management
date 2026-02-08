@@ -1,6 +1,7 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Components.Infrastructure;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
@@ -9,6 +10,7 @@ using Source.Data;
 using Source.Endpoints;
 using Source.Models;
 using Source.Models.Entities;
+using Source.Options;
 using Source.Service;
 using Source.Settings;
 
@@ -37,6 +39,9 @@ builder.Services.AddRequestLocalization(options =>
 builder.Services.AddHealthChecks();
 builder.Services.AddOpenApi();
 builder.Services.AddValidation();
+builder.Services.AddTransient<IEmailSender, EmailSender>();
+builder.Services.Configure<SmtpOption>(builder.Configuration.GetSection(SmtpOption.Smtp));
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreConnection"));

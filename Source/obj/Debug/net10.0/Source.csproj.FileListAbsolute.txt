@@ -125,3 +125,6 @@ D:\CodeCreate\Authorization\Source\bin\Debug\net10.0\zh-Hant\Microsoft.CodeAnaly
 D:\CodeCreate\Authorization\Source\bin\Debug\net10.0\Microsoft.AspNetCore.Identity.EntityFrameworkCore.dll
 D:\CodeCreate\Authorization\Source\bin\Debug\net10.0\Resources\Cultures.en-EN.json
 D:\CodeCreate\Authorization\Source\bin\Debug\net10.0\Resources\Cultures.ru-RU.json
+D:\CodeCreate\Authorization\Source\bin\Debug\net10.0\BouncyCastle.Cryptography.dll
+D:\CodeCreate\Authorization\Source\bin\Debug\net10.0\MailKit.dll
+D:\CodeCreate\Authorization\Source\bin\Debug\net10.0\MimeKit.dll
