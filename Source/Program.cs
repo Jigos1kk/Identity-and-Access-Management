@@ -44,41 +44,15 @@ builder.Services.AddHealthChecks();
 builder.Services.AddOpenApi();
 builder.Services.AddValidation();
 builder.Services.AddTransient<IEmailSender, EmailSender>();
-builder.Services.AddTransient<JwtService>();
 builder.Services.Configure<SmtpOption>(builder.Configuration.GetSection(SmtpOption.Smtp));
-builder.Services.Configure<JwtOption>(builder.Configuration.GetSection(JwtOption.Jwt));
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddDbContext<AppDbContext>(options =>
 {
     options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreConnection"));
 });
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        
-        ValidIssuer = builder.Configuration[$"{JwtOption.Jwt}:Issure"],
-        ValidAudience = builder.Configuration[$"{JwtOption.Jwt}:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(builder.Configuration[$"{JwtOption.Jwt}:Secret"])),
-        
-        // NameClaimType = ClaimTypes.NameIdentifier, // Откуда брать NameIdentifier
-        // RoleClaimType = ClaimTypes.Role // Откуда брать роли
-    };
-});
-
-builder.Services.AddIdentity<User, Role>(options =>
+builder.Services.AddAuthentication();
+builder.Services.AddIdentityApiEndpoints<User>(options =>
 {
     options.SignIn.RequireConfirmedAccount = true;
     
@@ -98,31 +72,12 @@ builder.Services.AddIdentity<User, Role>(options =>
 
 builder.Services.AddRazorPages();
 
-builder.Services.ConfigureApplicationCookie(options =>
-{
-    options.Cookie.HttpOnly = true;
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(5);
-
-    options.LoginPath = "/Identity/Account/Login";
-    options.AccessDeniedPath = "/Identity/Account/AccessDenied";
-    options.SlidingExpiration = true;
-});
-builder.Services.AddAuthorization(options =>
-{
-    options.DefaultPolicy = new AuthorizationPolicyBuilder()
-        .AddAuthenticationSchemes(JwtBearerDefaults.AuthenticationScheme)
-        .RequireAuthenticatedUser()
-        .Build();
-});
-
 var app = builder.Build();
-// app.UseHttpsRedirection();
-app.UseStaticFiles();
 app.UseRouting();
-
-app.UseAuthentication();
-app.UseAuthorization();
 app.UseRequestLocalization();
+
+app.UseAuthorization();
+app.MapIdentityApi<User>();
 
 if (app.Environment.IsDevelopment())
 {
@@ -130,7 +85,6 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference("/docs");
     app.MapScalarApiReference("/api-docs");
 }
-
 app.MapHealthChecks("/health");
 app.MapGroup("/user").MapUserController();
 app.MapGet("/test", () => "Hello World")
